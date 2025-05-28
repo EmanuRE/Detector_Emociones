@@ -18,7 +18,7 @@ Este proyecto implementa un sistema de detección de emociones a partir de la vo
 ---
 
 ## 📁 Estructura del Proyecto
-
+```
 Detector_Emociones_2/
 ├── main.py
 ├── model/
@@ -30,7 +30,7 @@ Detector_Emociones_2/
 │ └── audio_capture.py
 ├── requirements.txt
 └── README.md
-
+```
 ## 🚀 Cómo Ejecutar el Proyecto
 
 1. Clona este repositorio o descarga los archivos.

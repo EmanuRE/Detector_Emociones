@@ -8,6 +8,7 @@ from datetime import datetime
 import csv
 import os
 from utils.audio_capture import grabar_audio
+from uuid import uuid4
 
 # Cargar modelos entrenados
 modelo = joblib.load("model/model_svm.pkl")
@@ -39,24 +40,43 @@ try:
     emocion = encoder.inverse_transform(prediccion)[0]
     print(f"🧠 Emoción detectada: {emocion}")
 
+    # Obtener probabilidad si está disponible
+    if hasattr(modelo, "predict_proba"):
+        probas = modelo.predict_proba(caracteristicas)[0]
+        confianza = max(probas)
+    else:
+        confianza = "N/A"
+
     # Enviar emoción al Arduino
     if arduino:
         arduino.write(f"{emocion}\n".encode())
         print("📤 Emoción enviada a Arduino.")
 
-    # Guardar en CSV (para Power BI)
+    # Preparar datos para guardar en CSV
     fecha = datetime.now().strftime("%Y-%m-%d")
     hora = datetime.now().strftime("%H:%M:%S")
+    duracion_audio = 4  # segundos
+    fuente = "micrófono"
+    id_sesion = str(uuid4())[:8]
+    comentario = input("💬 Comentario (opcional): ")
+
+    # Ruta del archivo CSV
     archivo_csv = "powerbi/emociones.csv"
 
-    # Escribir encabezado solo si no existe el archivo
+    # Escribir encabezado si no existe
     escribir_encabezado = not os.path.isfile(archivo_csv)
 
-    with open(archivo_csv, "a", newline="", encoding="utf-8") as f:
+    with open(archivo_csv, "a", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f)
         if escribir_encabezado:
-            writer.writerow(["fecha", "hora", "emocion"])
-        writer.writerow([fecha, hora, emocion])
+            writer.writerow([
+                "fecha", "hora", "emocion", "confianza", "duracion_audio",
+                "fuente", "id_sesion", "comentario"
+            ])
+        writer.writerow([
+            fecha, hora, emocion, f"{confianza:.2f}" if isinstance(confianza, float) else confianza,
+            duracion_audio, fuente, id_sesion, comentario
+        ])
 
     print("✅ Emoción registrada en CSV.")
 
